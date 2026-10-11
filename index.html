@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>$TRUMPTY Meme Vault</title>
+  <meta name="description" content="Every $TRUMPTY meme in one place. Free to download and share." />
+  <meta name="theme-color" content="#a7bac6" id="theme-color" />
+
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+  <!-- Link previews (Telegram / X). After you deploy, change og:image to the full URL, e.g. https://yoursite.com/poster.jpg -->
+  <meta property="og:title" content="$TRUMPTY Meme Vault" />
+  <meta property="og:description" content="Every $TRUMPTY meme in one place. Free to download and share." />
+  <meta property="og:image" content="poster.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky: #d3dde5;
+      --orange: #FF7A1A;
+      --orange-hi: #FF9442;
+      --ink: #1c1009;
+      --smoke: rgba(28, 16, 9, 0.56);
+      --line: rgba(255, 255, 255, 0.24);
+      --text: #ffffff;
+      --dim: rgba(255, 255, 255, 0.72);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; scroll-padding-top: calc(var(--safe-top) + 72px); }
+    body {
+      background: var(--sky);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a, button { font: inherit; color: inherit; }
+    button { background: none; border: 0; cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+
+    /* ───────── glass ───────── */
+    .glass {
+      background: var(--smoke);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+      backdrop-filter: blur(22px) saturate(170%);
+      border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.30), 0 10px 30px rgba(20,10,0,.22);
+    }
+
+    /* ───────── video stage (fixed, stays bright) ───────── */
+    .stage { position: fixed; inset: 0; z-index: 0; background: var(--sky); }
+    .stage::after { /* faint top shade so the nav stays legible */
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(to bottom, rgba(0,0,0,.16), transparent 22%);
+    }
+    .bg {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: 42% 100%;
+      opacity: 1;
+      transition: opacity .45s ease;
+    }
+    .bg.fade { opacity: 0; }
+
+    /* Phones / portrait: don't zoom into the video. Show the whole scene (character + wall)
+       at a fixed size, parked low on the screen, with the edges feathered into matching
+       sky and stone colours so there's no visible box. */
+    @media (max-aspect-ratio: 1/1) {
+      .stage {
+        overflow: hidden;
+        background: linear-gradient(to bottom, #a7bac6 0%, #a7bac6 78%, #4b4248 86%, #4b4248 100%);
+      }
+      .bg {
+        position: absolute; left: 50%;
+        bottom: calc(var(--safe-bottom) + 52px);
+        height: 52vh; height: 52svh;
+        width: calc(52vh * 1.7778); width: calc(52svh * 1.7778);
+        transform: translateX(-46%);
+        object-fit: cover; object-position: center;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 86%, transparent 100%);
+        mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 86%, transparent 100%);
+      }
+    }
+
+    /* ───────── nav ───────── */
+    .nav {
+      position: fixed; z-index: 50;
+      top: calc(var(--safe-top) + 12px);
+      left: 50%; transform: translateX(-50%);
+      width: min(720px, calc(100% - 24px));
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 7px 7px 12px;
+      border-radius: 999px;
+    }
+    .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-weight: 700; letter-spacing: -0.02em; font-size: 1.05rem; }
+    .brand img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+    .links { display: flex; gap: 6px; }
+    .pill {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      min-width: 40px; height: 40px; padding: 0 14px;
+      border-radius: 999px; text-decoration: none;
+      background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
+      font-size: .86rem; font-weight: 600;
+      transition: background .2s, color .2s;
+    }
+    .pill:hover { background: var(--orange); color: var(--ink); }
+    .pill svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+    .sound svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .sound[aria-pressed="true"] { background: var(--orange); color: var(--ink); }
+    .sound[aria-pressed="true"] .ico-off, .sound[aria-pressed="false"] .ico-on { display: none; }
+
+    /* ───────── hero ───────── */
+    .hero {
+      position: relative; z-index: 1;
+      height: 100vh; height: 100svh;
+      display: flex; align-items: flex-end; justify-content: center;
+      padding: 0 12px calc(var(--safe-bottom) + 16px);
+    }
+    .dock {
+      width: min(520px, 100%);
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding: 14px 14px 14px 20px;
+      border-radius: 28px;
+      animation: dockIn .7s .25s cubic-bezier(.2,.8,.2,1) both;
+    }
+    @keyframes dockIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .dock h1 { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; }
+    .dock p { margin-top: 4px; font-size: .86rem; color: var(--dim); font-weight: 500; }
+    .btn {
+      flex: none; display: inline-flex; align-items: center; justify-content: center;
+      height: 46px; padding: 0 22px; border-radius: 999px;
+      background: var(--orange); color: var(--ink);
+      font-weight: 700; font-size: .92rem; text-decoration: none;
+      box-shadow: 0 6px 20px rgba(255,122,26,.40), inset 0 1px 0 rgba(255,255,255,.45);
+      transition: background .2s, transform .2s;
+    }
+    .btn:hover { background: var(--orange-hi); }
+    .btn:active { transform: scale(.97); }
+
+    /* ───────── vault sheet ───────── */
+    .sheet {
+      position: relative; z-index: 2;
+      min-height: 100vh; min-height: 100svh;
+      border-radius: 32px 32px 0 0;
+      background:
+        radial-gradient(110% 40% at 12% 0%, rgba(255,122,26,.30), transparent 62%),
+        rgba(24, 14, 8, 0.74);
+      -webkit-backdrop-filter: blur(30px) saturate(160%);
+      backdrop-filter: blur(30px) saturate(160%);
+      border-top: 1px solid rgba(255,255,255,.30);
+      box-shadow: 0 -24px 70px rgba(20,10,0,.28);
+      padding-top: 26px;
+    }
+    .sheet::before { /* grabber */
+      content: ""; position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+      width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.35);
+    }
+    .inner { max-width: 1400px; margin: 0 auto; padding: 0 clamp(12px, 3vw, 32px); }
+
+    .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0 20px; }
+    .head h2 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 800; letter-spacing: -0.035em; }
+    .chip {
+      font-size: .82rem; font-weight: 700; color: #FFB27A;
+      background: rgba(255,122,26,.16); border: 1px solid rgba(255,122,26,.40);
+      padding: 5px 12px; border-radius: 999px; white-space: nowrap;
+    }
+    .note { margin: -8px 0 18px; font-size: .84rem; color: var(--dim); line-height: 1.45; }
+    .note code { background: rgba(255,255,255,.12); padding: 1px 6px; border-radius: 6px; }
+
+    .grid { columns: 2; column-gap: 12px; }
+    @media (min-width: 640px)  { .grid { columns: 3; } }
+    @media (min-width: 1000px) { .grid { columns: 4; } }
+    @media (min-width: 1320px) { .grid { columns: 5; } }
+
+    .card {
+      position: relative; break-inside: avoid; margin-bottom: 12px;
+      border-radius: 18px; overflow: hidden;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.16);
+      transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .25s;
+    }
+    .card .open { display: block; width: 100%; line-height: 0; }
+    .card img { display: block; width: 100%; height: auto; min-height: 110px; }
+    .dl {
+      position: absolute; right: 8px; bottom: 8px;
+      width: 40px; height: 40px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: rgba(28,16,9,.62);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,.28);
+      transition: background .2s, color .2s, opacity .2s;
+    }
+    .dl svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .dl:hover { background: var(--orange); color: var(--ink); }
+    @media (hover: hover) {
+      .dl { opacity: 0; }
+      .card:hover .dl, .dl:focus-visible { opacity: 1; }
+      .card:hover { transform: translateY(-3px); border-color: rgba(255,122,26,.55); box-shadow: 0 14px 36px rgba(255,122,26,.22); }
+    }
+
+    footer { max-width: 1400px; margin: 0 auto; padding: 36px clamp(12px, 3vw, 32px) calc(var(--safe-bottom) + 36px); color: var(--dim); font-size: .84rem; line-height: 1.6; }
+    footer b { color: #fff; font-weight: 700; }
+
+    /* ───────── lightbox ───────── */
+    .lb {
+      position: fixed; inset: 0; z-index: 200; display: none;
+      flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+      padding: calc(var(--safe-top) + 64px) 16px calc(var(--safe-bottom) + 16px);
+      background: rgba(14, 8, 4, .80);
+      -webkit-backdrop-filter: blur(26px) saturate(150%); backdrop-filter: blur(26px) saturate(150%);
+    }
+    .lb.open { display: flex; }
+    .lb-img { max-width: min(92vw, 980px); max-height: calc(100svh - 190px); border-radius: 20px; object-fit: contain; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+    .lb-close { position: absolute; top: calc(var(--safe-top) + 14px); right: 14px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; }
+    .lb-close svg, .lb-bar svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .lb-count { position: absolute; top: calc(var(--safe-top) + 24px); left: 18px; font-size: .86rem; color: var(--dim); font-weight: 600; }
+    .lb-bar { display: flex; align-items: center; gap: 8px; padding: 7px; border-radius: 999px; }
+    .lb-bar button { height: 44px; min-width: 44px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: .92rem; background: rgba(255,255,255,.12); }
+    .lb-bar button:hover { background: rgba(255,255,255,.22); }
+    .lb-bar .primary { background: var(--orange); color: var(--ink); }
+    .lb-bar .primary:hover { background: var(--orange-hi); }
+
+    @media (max-width: 440px) {
+      .pill span { display: none; }
+      .pill { padding: 0; width: 40px; }
+      .dock h1 { font-size: 1.4rem; }
+      .btn { padding: 0 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .dock { animation: none; }
+      .bg, .card { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="stage" aria-hidden="true">
+    <video id="bg" class="bg" autoplay muted loop playsinline preload="auto" poster="poster.jpg">
+      <source src="trumpty_bg.mp4" type="video/mp4" />
+    </video>
+  </div>
+
+  <audio id="music" src="music.mp3" loop preload="auto"></audio>
+
+  <header class="nav glass">
+    <a class="brand" href="#top" aria-label="$TRUMPTY home">
+      <img src="favicon-192.png" alt="" width="30" height="30" />
+      <span>$TRUMPTY</span>
+    </a>
+    <nav class="links" aria-label="Community links">
+      <button class="pill sound" id="sound" type="button" aria-pressed="false" aria-label="Turn music on" hidden>
+        <svg class="ico-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        <svg class="ico-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+      </button>
+      <a class="pill" href="https://x.com/TrumptyMemecoin" target="_blank" rel="noopener noreferrer" aria-label="$TRUMPTY on X">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.73-8.835L1.254 2.25H8.08l4.264 5.638L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+        <span>X</span>
+      </a>
+      <a class="pill" href="https://t.me/OfficialTrumptyMemecoin" target="_blank" rel="noopener noreferrer" aria-label="$TRUMPTY on Telegram">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        <span>Telegram</span>
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="dock glass">
+        <div>
+          <h1>$TRUMPTY</h1>
+          <p id="hero-sub">Every meme, one vault. Free to grab.</p>
+        </div>
+        <a class="btn" href="#vault">Browse memes</a>
+      </div>
+    </section>
+
+    <section class="sheet" id="vault" aria-labelledby="vault-title">
+      <div class="inner">
+        <div class="head">
+          <h2 id="vault-title">Meme vault</h2>
+          <span class="chip" id="count"></span>
+        </div>
+        <p class="note" id="note" hidden></p>
+        <div class="grid" id="grid"></div>
+      </div>
+      <footer>
+        <b>Humpty Dumpty sat on a wall. $TRUMPTY didn't stay there.</b><br />
+        Community meme hub. Not financial advice.
+      </footer>
+    </section>
+  </main>
+
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Meme viewer">
+    <span class="lb-count" id="lb-count"></span>
+    <button class="lb-close glass" id="lb-close" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <img class="lb-img" id="lb-img" alt="" />
+    <div class="lb-bar glass">
+      <button id="lb-prev" aria-label="Previous meme"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="primary" id="lb-dl">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download
+      </button>
+      <button id="lb-share" hidden>
+        <svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/></svg>Share
+      </button>
+      <button id="lb-next" aria-label="Next meme"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Your meme list. Generated by make-memes.py -->
+  <script src="memes.js"></script>
+
+  <script>
+  (function () {
+    /* ───────── data ───────── */
+    var raw = Array.isArray(window.MEMES) ? window.MEMES : [];
+    var demo = raw.length === 0;
+
+    function demoTiles() {
+      var ratios = [1, 1.3, .8, 1.5, .75, 1, 1.35, .9, 1.2, .7, 1, 1.4, .85, 1.1, .95, 1.3, .75, 1.15];
+      return ratios.map(function (r, i) {
+        var w = 600, h = Math.round(600 * r), hue = 18 + (i * 7) % 24, l = 52 + (i * 5) % 18;
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '">' +
+          '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(' + hue + ',100%,' + (l + 10) + '%)"/><stop offset="1" stop-color="hsl(' + (hue - 6) + ',100%,' + (l - 14) + '%)"/></linearGradient></defs>' +
+          '<rect width="100%" height="100%" fill="url(#g)"/>' +
+          '<text x="50%" y="50%" fill="rgba(28,16,9,.75)" font-family="sans-serif" font-size="46" font-weight="800" text-anchor="middle" dominant-baseline="middle">your meme ' + (i + 1) + '</text></svg>';
+        return { src: 'data:image/svg+xml;utf8,' + encodeURIComponent(svg), w: w, h: h, name: 'placeholder-' + (i + 1) + '.svg' };
+      });
+    }
+
+    var items = (demo ? demoTiles() : raw).map(function (x) {
+      var o = typeof x === 'string' ? { src: x } : x;
+      if (!o.name) { try { o.name = decodeURIComponent(o.src.split('?')[0].split('/').pop()); } catch (e) { o.name = 'trumpty-meme'; } }
+      return o;
+    });
+
+    /* ───────── counts + note ───────── */
+    var countEl = document.getElementById('count');
+    countEl.textContent = demo ? 'preview' : items.length + ' memes';
+    if (!demo) document.getElementById('hero-sub').textContent = items.length + ' memes, all free to grab.';
+    if (demo) {
+      var note = document.getElementById('note');
+      note.hidden = false;
+      note.innerHTML = 'Preview tiles. Put your images in the <code>memes/</code> folder and run <code>python3 make-memes.py</code> to fill the vault.';
+    }
+
+    /* ───────── save / share ───────── */
+    function save(item) {
+      return fetch(item.src).then(function (r) { if (!r.ok) throw 0; return r.blob(); }).then(function (b) {
+        var u = URL.createObjectURL(b), a = document.createElement('a');
+        a.href = u; a.download = item.name; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(u); }, 2000);
+      }).catch(function () { window.open(item.src, '_blank', 'noopener'); });
+    }
+    function share(item) {
+      return fetch(item.src).then(function (r) { return r.blob(); }).then(function (b) {
+        var f = new File([b], item.name, { type: b.type || 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: '$TRUMPTY' });
+        return save(item);
+      }).catch(function (e) { if (!e || e.name !== 'AbortError') return save(item); });
+    }
+
+    /* ───────── grid ───────── */
+    var grid = document.getElementById('grid');
+    var dlIcon = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>';
+    var frag = document.createDocumentFragment();
+    items.forEach(function (item, i) {
+      var card = document.createElement('article'); card.className = 'card';
+      var open = document.createElement('button'); open.className = 'open'; open.type = 'button';
+      open.setAttribute('aria-label', 'Open meme ' + (i + 1));
+      var img = document.createElement('img');
+      img.src = item.src; img.alt = 'TRUMPTY meme ' + (i + 1); img.decoding = 'async';
+      if (i > 5) img.loading = 'lazy';
+      if (item.w && item.h) { img.width = item.w; img.height = item.h; }
+      open.appendChild(img);
+      open.addEventListener('click', function () { openLb(i); });
+      var dl = document.createElement('button'); dl.className = 'dl'; dl.type = 'button';
+      dl.setAttribute('aria-label', 'Download meme ' + (i + 1)); dl.innerHTML = dlIcon;
+      dl.addEventListener('click', function () { save(item); });
+      card.appendChild(open); card.appendChild(dl); frag.appendChild(card);
+    });
+    grid.appendChild(frag);
+
+    /* ───────── lightbox ───────── */
+    var lb = document.getElementById('lb'), lbImg = document.getElementById('lb-img'),
+        lbCount = document.getElementById('lb-count'), shareBtn = document.getElementById('lb-share'),
+        cur = 0, lastFocus = null;
+    if (navigator.share) shareBtn.hidden = false;
+
+    function show(i) {
+      cur = (i + items.length) % items.length;
+      lbImg.src = items[cur].src; lbImg.alt = 'TRUMPTY meme ' + (cur + 1);
+      lbCount.textContent = (cur + 1) + ' / ' + items.length;
+    }
+    function openLb(i) {
+      lastFocus = document.activeElement; show(i);
+      lb.classList.add('open'); document.body.style.overflow = 'hidden';
+      document.getElementById('lb-close').focus();
+    }
+    function closeLb() {
+      lb.classList.remove('open'); document.body.style.overflow = '';
+      if (lastFocus) lastFocus.focus();
+    }
+    document.getElementById('lb-close').addEventListener('click', closeLb);
+    document.getElementById('lb-prev').addEventListener('click', function () { show(cur - 1); });
+    document.getElementById('lb-next').addEventListener('click', function () { show(cur + 1); });
+    document.getElementById('lb-dl').addEventListener('click', function () { save(items[cur]); });
+    shareBtn.addEventListener('click', function () { share(items[cur]); });
+    lb.addEventListener('click', function (e) { if (e.target === lb) closeLb(); });
+    document.addEventListener('keydown', function (e) {
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLb();
+      if (e.key === 'ArrowLeft') show(cur - 1);
+      if (e.key === 'ArrowRight') show(cur + 1);
+    });
+    var tx = null;
+    lb.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+    lb.addEventListener('touchend', function (e) {
+      if (tx === null) return;
+      var dx = e.changedTouches[0].clientX - tx; tx = null;
+      if (Math.abs(dx) > 55) show(cur + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+
+    /* ───────── background video ───────── */
+    var v = document.getElementById('bg'), theme = document.getElementById('theme-color');
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { v.removeAttribute('autoplay'); v.pause(); }
+
+    // soft dissolve through the sky colour at the loop point (fall ends, he walks back in)
+    v.addEventListener('timeupdate', function () {
+      var d = v.duration, t = v.currentTime;
+      if (!d) return;
+      if (t > d - 0.5) v.classList.add('fade');
+      else if (t < 0.45) v.classList.remove('fade');
+    });
+
+    // pause the video once the vault sheet covers it (saves battery), resume when it's back
+    var hero = document.getElementById('top');
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        var on = entries[0].intersectionRatio > 0.12;
+        theme.setAttribute('content', on ? '#a7bac6' : '#18100a');
+        if (reduce) return;
+        if (on) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { v.pause(); }
+      }, { threshold: [0, 0.12, 0.5] }).observe(hero);
+    }
+
+    /* ───────── background music ───────── */
+    var music = document.getElementById('music'), soundBtn = document.getElementById('sound');
+    var KEY = 'trumpty-music', wantOn = true, resumeOnShow = false;
+    try { wantOn = localStorage.getItem(KEY) !== 'off'; } catch (e) {}
+    function remember(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+    function setUI(on) {
+      soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      soundBtn.setAttribute('aria-label', on ? 'Turn music off' : 'Turn music on');
+    }
+    function fadeIn() {
+      var v = 0; music.volume = 0;
+      var id = setInterval(function () { v = Math.min(0.45, v + 0.03); music.volume = v; if (v >= 0.45) clearInterval(id); }, 100);
+    }
+    function start() {
+      var p = music.play();
+      if (!p || !p.then) return Promise.resolve(false);
+      return p.then(function () { setUI(true); fadeIn(); return true; }, function () { return false; });
+    }
+    var gestures = ['pointerup', 'click', 'keydown', 'touchend'];
+    function onGesture(e) {
+      if (soundBtn.contains(e.target)) return;
+      if (!wantOn) return disarm();
+      start().then(function (ok) { if (ok) disarm(); });
+    }
+    function arm() { gestures.forEach(function (g) { document.addEventListener(g, onGesture, true); }); }
+    function disarm() { gestures.forEach(function (g) { document.removeEventListener(g, onGesture, true); }); }
+
+    // only show the button if music.mp3 actually exists
+    music.addEventListener('loadedmetadata', function () { soundBtn.hidden = false; });
+    music.addEventListener('error', function () { soundBtn.hidden = true; disarm(); });
+
+    soundBtn.addEventListener('click', function () {
+      if (music.paused) { wantOn = true; remember('on'); start(); }
+      else { wantOn = false; remember('off'); music.pause(); setUI(false); disarm(); }
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && !music.paused) { music.pause(); resumeOnShow = true; }
+      else if (!document.hidden && resumeOnShow) { resumeOnShow = false; music.play().catch(function () {}); }
+    });
+
+    if (wantOn) start().then(function (ok) { if (!ok) arm(); });  // browsers usually block this until the first tap
+  })();
+  </script>
+</body>
+</html>
